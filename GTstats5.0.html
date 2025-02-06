@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matches</title>
+  <style>
+    /* Reset & Box-Sizing */
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      box-sizing: border-box;
+      background-color: #1A1A1A;
+      color: #E0E0E0;
+      font-family: 'Roboto', sans-serif;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    /* Combined Sticky Header (Day Picker + Filters + Favorites) */
+    header.stickyHeader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: #1A1A1A;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    /* Day Picker Bar */
+    .dayPicker {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .dayItem {
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .dayItem:hover {
+      background-color: #333;
+    }
+    .activeDay {
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;
+    }
+    /* Header Controls (Filters + Favorites) */
+    .headerControls {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      background-color: #1A1A1A;
+    }
+    .picker {
+      flex: 0 0 70%;
+      height: 3em;
+      border-radius: 6px;
+      border: none;
+      background-color: #333;
+      color: #E0E0E0;
+      padding: 0 12px;
+      font-size: 14px;
+      max-width: 70%;
+    }
+    .favoritesButton {
+      flex: 0 0 30%;
+      height: 2.5em;
+      border-radius: 4px;
+      border: none;
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      color: #1A1A1A;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+      max-width: 30%;
+    }
+    /* Main Container */
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 21.5vw 2.08vw 2.08vw 2.08vw;
+      box-sizing: border-box;
+    }
+    /* Match Cards */
+    .matchesContainer {
+      margin-top: 10px;
+      max-width: 100%;
+    }
+    .match {
+      background-color: #2C2C2C;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .matchHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 12px;
+      background-color: #333;
+    }
+    .matchDate {
+      font-size: 12px;
+      color: #BBB;
+    }
+    .favoriteIcon {
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      cursor: pointer;
+      font-size: 6.3vw;
+      margin-top: -1vw;
+      user-select: none;
+    }
+    .teamNames {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background-color: #2C2C2C;
+      overflow-x: hidden;
+    }
+    .teamName {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      flex: 1;
+      color: #FFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .teamLogo {
+      margin: 0 auto 6px;
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+    }
+    .vs {
+      margin: 0 8px;
+      font-size: 14px;
+      color: #888;
+    }
+    .winstreakContainer {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 3.6vw;
+      overflow-x: hidden;
+    }
+    .winstreakWrapper {
+      display: flex;
+      gap: 2.4px;
+    }
+    .winstreakBox {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 21.75px;
+      height: 20px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: bold;
+      color: #FFF;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .win { background-color: #4CAF50; }
+    .draw { background-color: #FFC107; color: #FFF; }
+    .loss { background-color: #F44336; }
+    .borderGradient {
+      width: 100%;
+      height: 0.32vw;
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      opacity: 0.8;
+    }
+    .matchSubFilter {
+      display: flex;
+      justify-content: center;
+      background-color: #333;
+      padding: 4px 0;
+    }
+    .subFilterOption {
+      margin: 0 10px;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #E0E0E0;
+      transition: background 0.3s;
+    }
+    /* Remove hover effect on active filter options */
+    .subFilterOption.active:hover {
+      background: none;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: inherit;
+      transition: none;
+    }
+    .subFilterOption.active {
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;
+    }
+    .statsContainer {
+      padding: 16px;
+      background-color: #333;
+      border-top: 1px solid #444;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .statsContainer::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300px;
+      height: 300px;
+      background-image: url('https://i.ibb.co/JWQRNMVd/Logo-GT-24-1000.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      opacity: 0.08;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .statsContainer > * {
+      position: relative;
+      z-index: 1;
+    }
+    .statRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 12.5px;
+    }
+    .statTitle {
+      text-align: center;
+      font-weight: bold;
+      color: #FFF;
+      flex: 1;
+    }
+    .statValue {
+      text-align: center;
+      color: #E0E0E0;
+      flex: 1;
+      font-weight: normal;
+    }
+    /* Percentage & Goals Styles */
+    .percent-darkgreen { color: #00ac4b; font-weight: bold; }
+    .percent-green { color: #32CD32; font-weight: bold; }
+    .percent-greenyellow { color: #9ACD32; font-weight: bold; }
+    .percent-yellow { color: #FFD700; font-weight: bold; }
+    .percent-orange { color: #FFA500; font-weight: bold; }
+    .percent-red { color: #FF0000; font-weight: bold; }
+    .goals-darkgreen { color: #228B22; font-weight: bold; }
+    .goals-green { color: #32CD32; font-weight: bold; }
+    .goals-greenyellow { color: #9ACD32; font-weight: bold; }
+    .goals-yellow { color: #FFD700; font-weight: bold; }
+    .goals-orange { color: #FFA500; font-weight: bold; }
+    .goals-red { color: #FF4500; font-weight: bold; }
+    .goals-conceded-green1 { color: #32CD32; font-weight: bold; }
+    .goals-conceded-green2 { color: #9ACD32; font-weight: bold; }
+    .goals-conceded-yellow { color: #FFD700; font-weight: bold; }
+    .goals-conceded-orange { color: #FFA500; font-weight: bold; }
+    .goals-conceded-red { color: #FF0000; font-weight: bold; }
+    /* Toggle Icon */
+    .toggleIcon {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      background-color: #555;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      opacity: 0.60;
+      z-index: 2;
+    }
+    .toggleIcon:hover { background-color: #777; }
+    .toggleIcon::before {
+      content: '−';
+      color: #FFF;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .toggleIcon.expanded::before {
+      content: '+';
+      color: #FFF;
+      font-size: 14px;
+      line-height: 1;
+    }
+    /* Info Icon */
+    .infoIcon {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      width: 20px;
+      height: 20px;
+      background-color: #555;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      opacity: 0.60;
+      z-index: 2;
+    }
+    .infoIcon:hover { background-color: #777; }
+    .infoIcon::before {
+      content: 'i';
+      color: #0092dc;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .infoIcon::after {
+      content: 'Stats on last 7 matches';
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translateY(-50%) translateX(8px);
+      background-color: #333;
+      color: #00aaff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      font-size: 12px;
+      z-index: 10;
+    }
+    .infoIcon:hover::after { opacity: 1; }
+    /* Empty Favorites Message */
+    .emptyFavorites {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      color: #FFD700;
+      text-align: center;
+    }
+    .emptyFavorites .star {
+      font-size: 8vw;
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+    .emptyFavorites .message {
+      font-size: 4vw;
+      background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    /* Mobile Optimizations */
+    @media (max-width: 480px) {
+      .dayPicker { padding: 1.67vw 0 0.83vw 0; }
+      .headerControls { padding: 4px 6px; }
+      .picker { font-size: 13px; padding: 0 8px; }
+      .favoritesButton { font-size: 15px; }
+      .teamNames { padding: 3.20vw; }
+      .winstreakContainer { padding: 0 3vw 3vw 3vw; }
+      .statsContainer { padding: 3.47vw; }
+      .matchHeader { padding: 2.67vw 3.73vw; }
+      .teamName { font-size: 14px; }
+      .teamLogo { width: 11vw; height: 11vw; }
+      .winstreakBox { width: 5.1vw; height: 4.9vw; font-size: 2.33vw; }
+      .statRow { font-size: 11.2px; margin-bottom: 10px; }
+      .toggleIcon { width: 16px; height: 16px; bottom: 6px; right: 6px; }
+      .toggleIcon::before { font-size: 12px; }
+      .toggleIcon.expanded::before { font-size: 12px; }
+      .infoIcon { width: 16px; height: 16px; bottom: 6px; left: 6px; }
+      .infoIcon::before { font-size: 10.5px; }
+      .infoIcon::after { font-size: 13px; }
+      .emptyFavorites .star { font-size: 16vw; }
+      .emptyFavorites .message { font-size: 6vw; }
+      .container { padding: 21.5vw 2.08vw 2.08vw 2.08vw;  }
+      .statsContainer::before { width: 53vw; height: 53vw; }
+      .borderGradient { height: 0.32vw; }
+    }
+    /* League Groups */
+    .leagueGroup {
+      margin-bottom: 8px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .leagueHeader {
+      background-color: #333;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    .leagueToggle {
+      margin-right: 8px;
+      font-size: 16px;
+      user-select: none;
+    }
+    .leagueGroupContent {
+      padding: 10px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Combined Sticky Header -->
+  <header class="stickyHeader">
+    <!-- Day Picker -->
+    <div id="dayPicker" class="dayPicker">
+      <!-- Day items added via JavaScript -->
+    </div>
+    <!-- Header Controls (Filters + Favorites) -->
+    <div class="headerControls">
+      <select class="picker" id="filter">
+        <option value="all">All matches</option>
+        <option value="goalsMatch">Average Total Goals</option> 
+        <option value="scoredGoals">Average Scored Goals</option> 
+        <option value="hover15">Average Over 1.5</option>
+        <option value="hover25">Average Over 2.5</option>
+        <option value="hrgoals">Goals Conceded</option>
+        <option value="1stHalf_hover05">1st Half Over 0.5</option>
+        <option value="1stHalf_hover15">1st Half Over 1.5</option>
+        <option value="2ndHalf_over05">2nd Half Over 0.5</option>
+        <option value="2ndHalf_over15">2nd Half Over 1.5</option> 
+        <option value="hcleansheet">Average Clean Sheets</option>
+        <option value="hbtts">GG</option>
+      </select>
+      <button class="favoritesButton" onclick="toggleShowFavorites()">Favorites</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="matchesContainer" id="matchesContainer"></div>
+  </div>
+
+  <script>
+    // -------------------------
+    // Global Variables & Mappings
+    // -------------------------
+    let favorites = []; // Persist favorites across days.
+    let showFavorites = false;
+    let initialMatches = [];
+    let currentDay = ''; // Track the currently selected day.
+
+    const matchesContainer = document.getElementById('matchesContainer');
+    const filterSelect = document.getElementById('filter');
+
+    const filterMap = {
+      goalsMatch: { home: 'avgTotalGoals', away: 'avgTotalGoals' },
+      scoredGoals: { home: 'scoredGoals', away: 'scoredGoals' },
+      hover25: { home: 'hover25', away: 'aover25' },
+      hover15: { home: 'hover15', away: 'aover15' },
+      hrgoals: { home: 'hrgoals', away: 'argoals' },
+      '1stHalf_hover05': { home: '1stHalf_hover05', away: '1stHalf_aover05' },
+      '1stHalf_hover15': { home: '1stHalf_hover15', away: '1stHalf_aover15' },
+      '2ndHalf_over05': { home: '2ndHalf_over05', away: '2ndHalf_over05' },
+      '2ndHalf_over15': { home: '2ndHalf_over15', away: '2ndHalf_over15' },
+      hcleansheet: { home: 'hcleansheet', away: 'acleansheet' },
+      hbtts: { home: 'hbtts', away: 'abtts' },
+    };
+
+    const filterToStatTitle = {
+      goalsMatch: 'Total Goals', 
+      scoredGoals: 'Scored Goals', 
+      hover25: 'Over 2.5',
+      hover15: 'Over 1.5',
+      hrgoals: 'Goals Conceded',
+      '1stHalf_hover05': '1st Half Over 0.5',
+      '1stHalf_hover15': '1st Half Over 1.5',
+      '2ndHalf_over05': '2nd Half Over 0.5', 
+      '2ndHalf_over15': '2nd Half Over 1.5', 
+      hcleansheet: 'Clean Sheets',
+      hbtts: 'GG'
+    };
+
+    // -------------------------
+    // Day Picker Setup
+    // -------------------------
+    const dayPicker = document.getElementById('dayPicker');
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const dayGists = {
+      "Monday": "https://gist.githubusercontent.com/CostinStefan",
+      "Tuesday": "https://gist.githubusercontent.com/CostinStefan",
+      "Wednesday": "https://gist.githubusercontent.com/CostinStefan",
+      "Thursday": "https://gist.githubusercontent.com/CostinStefan",
+      "Friday": "https://gist.githubusercontent.com/CostinStefan/67f98ef01e759671ce13939b57fe6646/raw/aca7bc463b2096776c36cfc17fcb7cb1b75cf66d/friday.json",
+      "Saturday": "https://gist.githubusercontent.com/CostinStefan/6a6d57bd498ba7e3e4b875f7a96de26a/raw/b5fb52366a6457ff2c4e14749d914560cf82a806/saturday.json",
+      "Sunday": "https://gist.githubusercontent.com/CostinStefan/"
+    };
+
+    function initDayPicker() {
+      days.forEach(day => {
+        const span = document.createElement('span');
+        span.classList.add('dayItem');
+        span.textContent = day.substring(0, 3);
+        span.addEventListener('click', () => {
+          document.querySelectorAll('.dayItem').forEach(el => el.classList.remove('activeDay'));
+          span.classList.add('activeDay');
+          currentDay = day;
+          loadMatchesForDay(day);
+        });
+        dayPicker.appendChild(span);
+      });
+      let jsDay = new Date().getDay();
+      let activeIndex = (jsDay === 0) ? 6 : jsDay - 1;
+      document.querySelectorAll('.dayItem')[activeIndex].classList.add('activeDay');
+      currentDay = days[activeIndex];
+      loadMatchesForDay(days[activeIndex]);
+    }
+
+    // -------------------------
+    // Load Matches for a Day
+    // -------------------------
+    function loadMatchesForDay(day) {
+      initialMatches = [];
+      renderMatches();
+      const gistUrl = dayGists[day];
+      if (!gistUrl) {
+        console.error(`No gist URL found for day: ${day}`);
+        return;
+      }
+      fetch(gistUrl)
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(match => {
+            match.homeData.scoredGoals = calculateScoredGoals(match.homeData.hsgoals, match.homeData.hmatches);
+            match.awayData.scoredGoals = calculateScoredGoals(match.awayData.asgoals, match.awayData.amatches);
+          });
+          initialMatches = data;
+          renderMatches();
+        })
+        .catch(err => console.error('Error fetching matches:', err));
+    }
+
+    // -------------------------
+    // Favorites & Filter Handling
+    // -------------------------
+    filterSelect.addEventListener('change', () => {
+      renderMatches();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    function toggleShowFavorites() {
+      showFavorites = !showFavorites;
+      document.querySelector('.favoritesButton').textContent = showFavorites ? 'All Matches' : 'Favorites';
+      if (!showFavorites) {
+        loadMatchesForDay(currentDay);
+      } else {
+        renderMatches();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleFavorite(match, event) {
+      event.stopPropagation(); // Prevent the toggle (hide/show stats) from activating
+      if (favorites.some(fav => fav.id === match.id)) {
+        favorites = favorites.filter(fav => fav.id !== match.id);
+      } else {
+        favorites.push(match);
+      }
+      renderMatches();
+    }
+
+    function renderEmptyFavoritesMessage() {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.classList.add('emptyFavorites');
+      const star = document.createElement('div');
+      star.classList.add('star');
+      star.textContent = '★';
+      const message = document.createElement('div');
+      message.classList.add('message');
+      message.textContent = 'Add to favorites :)';
+      emptyDiv.appendChild(star);
+      emptyDiv.appendChild(message);
+      matchesContainer.appendChild(emptyDiv);
+    }
+
+    // -------------------------
+    // Helper Functions (Winstreaks, Stats, etc.)
+    // -------------------------
+    function createWinstreakBox(result) {
+      const letter = result[0];
+      const scoreMatch = result.match(/\(([^)]+)\)/);
+      const finalScore = scoreMatch ? scoreMatch[1] : '';
+      const box = document.createElement('div');
+      box.classList.add('winstreakBox');
+      if (letter === 'W') box.classList.add('win');
+      else if (letter === 'D') box.classList.add('draw');
+      else if (letter === 'L') box.classList.add('loss');
+      box.textContent = letter;
+      box.dataset.letter = letter;
+      box.dataset.score = finalScore;
+      box.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const matchDiv = box.closest('.match');
+        const allBoxes = matchDiv.querySelectorAll('.winstreakBox');
+        allBoxes.forEach(b => {
+          b.textContent = (b.textContent === b.dataset.letter) ? b.dataset.score : b.dataset.letter;
+        });
+      });
+      return box;
+    }
+
+    function renderWinstreakColumn(dataArray) {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('winstreakWrapper');
+      dataArray.forEach(result => {
+        wrapper.appendChild(createWinstreakBox(result));
+      });
+      return wrapper;
+    }
+
+    function renderOverallStats(match, filter, activeStatTitle) {
+      const container = document.createElement('div');
+      const homeScoredGoals = calculateScoredGoals(match.homeData.hsgoals, match.homeData.hmatches);
+      const awayScoredGoals = calculateScoredGoals(match.awayData.asgoals, match.awayData.amatches);
+      const essentialStats = [
+        { title: 'Total Goals', homeValue: match.homeData.avgTotalGoals, awayValue: match.awayData.avgTotalGoals },
+        { title: 'Scored Goals', homeValue: homeScoredGoals, awayValue: awayScoredGoals },
+        { title: 'Over 1.5', homeValue: match.homeData.hover15, awayValue: match.awayData.aover15 },
+        { title: 'Over 2.5', homeValue: match.homeData.hover25, awayValue: match.awayData.aover25 },
+        { title: 'Goals Conceded', homeValue: match.homeData.hrgoals, awayValue: match.awayData.argoals },
+        { title: '1st Half Over 0.5', homeValue: match.homeData['1stHalf_hover05'], awayValue: match.awayData['1stHalf_aover05'] },
+        { title: '1st Half Over 1.5', homeValue: match.homeData['1stHalf_hover15'], awayValue: match.awayData['1stHalf_aover15'] },
+        { title: '2nd Half Over 0.5', homeValue: match.homeData['2ndHalf_over05'], awayValue: match.awayData['2ndHalf_over05'] },
+        { title: '2nd Half Over 1.5', homeValue: match.homeData['2ndHalf_over15'], awayValue: match.awayData['2ndHalf_over15'] },
+        { title: 'Clean Sheets', homeValue: match.homeData.hcleansheet, awayValue: match.awayData.acleansheet },
+        { title: 'GG', homeValue: match.homeData.hbtts, awayValue: match.awayData.abtts }
+      ];
+      essentialStats.forEach(stat => {
+        const row = document.createElement('div');
+        row.classList.add('statRow');
+        const homeSpan = document.createElement('span');
+        homeSpan.classList.add('statValue');
+        homeSpan.textContent = stat.homeValue;
+        const titleSpan = document.createElement('span');
+        titleSpan.classList.add('statTitle');
+        titleSpan.textContent = stat.title;
+        const awaySpan = document.createElement('span');
+        awaySpan.classList.add('statValue');
+        awaySpan.textContent = stat.awayValue;
+        if (stat.title === activeStatTitle && filter !== 'all') {
+          let homeClass = '';
+          let awayClass = '';
+          if (filter === 'goalsMatch' || filter === 'scoredGoals') {
+            homeClass = getGoalsClass(stat.homeValue);
+            awayClass = getGoalsClass(stat.awayValue);
+          } else if (filter === 'hrgoals') {
+            homeClass = getGoalsConcededClass(parseFloat(stat.homeValue.replace('+','')));
+            awayClass = getGoalsConcededClass(parseFloat(stat.awayValue.replace('+','')));
+          } else if (filter === 'hover25' || filter === 'hover15' ||
+                     filter === '1stHalf_hover15' || filter === '1stHalf_hover05' ||
+                     filter === '2ndHalf_over05' || filter === '2ndHalf_over15') {
+            homeClass = getPercentageClass(stat.homeValue);
+            awayClass = getPercentageClass(stat.awayValue);
+          } else {
+            homeClass = getGoalsClass(stat.homeValue);
+            awayClass = getGoalsClass(stat.awayValue);
+          }
+          if (homeClass) homeSpan.classList.add(homeClass);
+          if (awayClass) awaySpan.classList.add(awayClass);
+          homeSpan.style.fontWeight = 'bold';
+          awaySpan.style.fontWeight = 'bold';
+        }
+        row.appendChild(homeSpan);
+        row.appendChild(titleSpan);
+        row.appendChild(awaySpan);
+        container.appendChild(row);
+      });
+      return container;
+    }
+
+    function renderHomeStats(stats, globalFilter, activeStatTitle) {
+      const container = document.createElement('div');
+      const scoredGoals = calculateScoredGoals(stats.hsgoals, stats.hmatches);
+      const statData = [
+        { title: 'Total Goals', value: stats.avgTotalGoals },
+        { title: 'Scored Goals', value: scoredGoals },
+        { title: 'Over 1.5', value: stats.hover15 },
+        { title: 'Over 2.5', value: stats.hover25 },
+        { title: 'Goals Conceded', value: stats.hrgoals },
+        { title: '1st Half Over 0.5', value: stats['1stHalf_hover05'] },
+        { title: '1st Half Over 1.5', value: stats['1stHalf_hover15'] },
+        { title: '2nd Half Over 0.5', value: stats['2ndHalf_over05'] },
+        { title: '2nd Half Over 1.5', value: stats['2ndHalf_over15'] },
+        { title: 'Clean Sheets', value: stats.hcleansheet },
+        { title: 'GG', value: stats.hbtts }
+      ];
+      statData.forEach(stat => {
+        const row = document.createElement('div');
+        row.classList.add('statRow');
+        const homeSpan = document.createElement('span');
+        homeSpan.classList.add('statValue');
+        homeSpan.textContent = stat.value;
+        const titleSpan = document.createElement('span');
+        titleSpan.classList.add('statTitle');
+        titleSpan.textContent = stat.title;
+        const awaySpan = document.createElement('span');
+        awaySpan.classList.add('statValue');
+        awaySpan.textContent = '';
+        if (globalFilter !== 'all' && stat.title === activeStatTitle) {
+          let homeClass = '';
+          if (globalFilter === 'goalsMatch' || globalFilter === 'scoredGoals') {
+            homeClass = getGoalsClass(stat.value);
+          } else if (globalFilter === 'hrgoals') {
+            homeClass = getGoalsConcededClass(parseFloat(stat.value.replace('+','')));
+          } else if (globalFilter === 'hover25' || globalFilter === 'hover15' ||
+                     globalFilter === '1stHalf_hover15' || globalFilter === '1stHalf_hover05' ||
+                     globalFilter === '2ndHalf_over05' || globalFilter === '2ndHalf_over15') {
+            homeClass = getPercentageClass(stat.value);
+          } else {
+            homeClass = getGoalsClass(stat.value);
+          }
+          if (homeClass) homeSpan.classList.add(homeClass);
+          homeSpan.style.fontWeight = 'bold';
+        }
+        row.appendChild(homeSpan);
+        row.appendChild(titleSpan);
+        row.appendChild(awaySpan);
+        container.appendChild(row);
+      });
+      return container;
+    }
+
+    function renderAwayStats(stats, globalFilter, activeStatTitle) {
+      const container = document.createElement('div');
+      const scoredGoals = calculateScoredGoals(stats.asgoals, stats.amatches);
+      const statData = [
+        { title: 'Total Goals', value: stats.avgTotalGoals },
+        { title: 'Scored Goals', value: scoredGoals },
+        { title: 'Over 1.5', value: stats.aover15 },
+        { title: 'Over 2.5', value: stats.aover25 },
+        { title: 'Goals Conceded', value: stats.argoals },
+        { title: '1st Half Over 0.5', value: stats['1stHalf_aover05'] },
+        { title: '1st Half Over 1.5', value: stats['1stHalf_aover15'] },
+        { title: '2nd Half Over 0.5', value: stats['2ndHalf_over05'] },
+        { title: '2nd Half Over 1.5', value: stats['2ndHalf_over15'] },
+        { title: 'Clean Sheets', value: stats.acleansheet },
+        { title: 'GG', value: stats.abtts }
+      ];
+      statData.forEach(stat => {
+        const row = document.createElement('div');
+        row.classList.add('statRow');
+        const homeSpan = document.createElement('span');
+        homeSpan.classList.add('statValue');
+        homeSpan.textContent = '';
+        const titleSpan = document.createElement('span');
+        titleSpan.classList.add('statTitle');
+        titleSpan.textContent = stat.title;
+        const awaySpan = document.createElement('span');
+        awaySpan.classList.add('statValue');
+        awaySpan.textContent = stat.value;
+        if (globalFilter !== 'all' && stat.title === activeStatTitle) {
+          let awayClass = '';
+          if (globalFilter === 'goalsMatch' || globalFilter === 'scoredGoals') {
+            awayClass = getGoalsClass(stat.value);
+          } else if (globalFilter === 'hrgoals') {
+            awayClass = getGoalsConcededClass(parseFloat(stat.value.replace('+','')));
+          } else if (globalFilter === 'hover25' || globalFilter === 'hover15' ||
+                     globalFilter === '1stHalf_hover15' || globalFilter === '1stHalf_hover05' ||
+                     globalFilter === '2ndHalf_over05' || globalFilter === '2ndHalf_over15') {
+            awayClass = getPercentageClass(stat.value);
+          } else {
+            awayClass = getGoalsClass(stat.value);
+          }
+          if (awayClass) awaySpan.classList.add(awayClass);
+          awaySpan.style.fontWeight = 'bold';
+        }
+        row.appendChild(homeSpan);
+        row.appendChild(titleSpan);
+        row.appendChild(awaySpan);
+        container.appendChild(row);
+      });
+      return container;
+    }
+
+    function updateCardView(match, subFilter, winstreakContainer, statsContainer) {
+      winstreakContainer.innerHTML = '';
+      statsContainer.innerHTML = '';
+      const globalFilter = filterSelect.value;
+      const activeStatTitle = filterToStatTitle[globalFilter];
+      if (subFilter === 'overall') {
+        const overallStats = renderOverallStats(match, globalFilter, activeStatTitle);
+        const homeWS = renderWinstreakColumn(match.homeWinstreak);
+        const awayWS = renderWinstreakColumn(match.awayWinstreak);
+        winstreakContainer.appendChild(homeWS);
+        winstreakContainer.appendChild(awayWS);
+        statsContainer.appendChild(overallStats);
+      } else if (subFilter === 'home') {
+        const dataArray = match.homeAtHomeWinstreak || match.homeWinstreak;
+        const statsObj = match.hhomeData || match.homeData;
+        const homeWS = renderWinstreakColumn(dataArray);
+        winstreakContainer.appendChild(homeWS);
+        statsContainer.appendChild(renderHomeStats(statsObj, globalFilter, activeStatTitle));
+      } else if (subFilter === 'away') {
+        const dataArray = match.awayAtAwayWinstreak || match.awayWinstreak;
+        const statsObj = match.aawayData || match.awayData;
+        const awayWS = renderWinstreakColumn(dataArray);
+        awayWS.style.marginLeft = 'auto';
+        winstreakContainer.appendChild(awayWS);
+        const awayStats = renderAwayStats(statsObj, globalFilter, activeStatTitle);
+        awayStats.style.marginLeft = 'auto';
+        statsContainer.appendChild(awayStats);
+      }
+    }
+
+    function createMatchCard(match) {
+      const matchDiv = document.createElement('div');
+      matchDiv.classList.add('match');
+
+      // Header
+      const matchHeader = document.createElement('div');
+      matchHeader.classList.add('matchHeader');
+      const matchDate = document.createElement('span');
+      matchDate.classList.add('matchDate');
+      matchDate.textContent = `${match.dateNtime} - ${match.country} ${match.league}`;
+      matchHeader.appendChild(matchDate);
+      const starIcon = document.createElement('span');
+      starIcon.classList.add('favoriteIcon');
+      starIcon.innerHTML = favorites.some(fav => fav.id === match.id) ? '★' : '☆';
+      starIcon.addEventListener('click', (event) => toggleFavorite(match, event));
+      matchHeader.appendChild(starIcon);
+      matchDiv.appendChild(matchHeader);
+
+      // Team Names and Logos
+      const teamNames = document.createElement('div');
+      teamNames.classList.add('teamNames');
+      const homeTeam = document.createElement('div');
+      homeTeam.classList.add('teamName');
+      const homeLogo = document.createElement('img');
+      homeLogo.classList.add('teamLogo');
+      homeLogo.src = match.homeLogo;
+      homeLogo.alt = `${match.homeTeam} logo`;
+      const homeTeamName = document.createElement('span');
+      homeTeamName.textContent = match.homeTeam;
+      homeTeam.appendChild(homeLogo);
+      homeTeam.appendChild(homeTeamName);
+      const vs = document.createElement('div');
+      vs.classList.add('vs');
+      vs.textContent = 'vs';
+      const awayTeam = document.createElement('div');
+      awayTeam.classList.add('teamName');
+      const awayLogo = document.createElement('img');
+      awayLogo.classList.add('teamLogo');
+      awayLogo.src = match.awayLogo;
+      awayLogo.alt = `${match.awayTeam} logo`;
+      const awayTeamName = document.createElement('span');
+      awayTeamName.textContent = match.awayTeam;
+      awayTeam.appendChild(awayLogo);
+      awayTeam.appendChild(awayTeamName);
+      teamNames.appendChild(homeTeam);
+      teamNames.appendChild(vs);
+      teamNames.appendChild(awayTeam);
+      matchDiv.appendChild(teamNames);
+
+      // Winstreak Container (initial view: overall)
+      const winstreakContainer = document.createElement('div');
+      winstreakContainer.classList.add('winstreakContainer');
+      const homeWS = renderWinstreakColumn(match.homeWinstreak);
+      const awayWS = renderWinstreakColumn(match.awayWinstreak);
+      winstreakContainer.appendChild(homeWS);
+      winstreakContainer.appendChild(awayWS);
+      matchDiv.appendChild(winstreakContainer);
+
+      // Golden Gradient Border
+      const borderGradient = document.createElement('div');
+      borderGradient.classList.add('borderGradient');
+      matchDiv.appendChild(borderGradient);
+
+      // Stats Container
+      const statsContainer = document.createElement('div');
+      statsContainer.classList.add('statsContainer');
+
+      // Subfilter (Home, Overall, Away)
+      const subFilterContainer = document.createElement('div');
+      subFilterContainer.classList.add('matchSubFilter');
+      const homeLabel = match.homeTeam.substring(0, 3).toUpperCase() + " - Home";
+      const awayLabel = match.awayTeam.substring(0, 3).toUpperCase() + " - Away";
+      const options = [
+        { label: homeLabel, value: 'home' },
+        { label: 'Overall', value: 'overall' },
+        { label: awayLabel, value: 'away' }
+      ];
+      options.forEach(opt => {
+        const span = document.createElement('span');
+        span.classList.add('subFilterOption');
+        if (opt.value === 'overall') span.classList.add('active');
+        span.textContent = opt.label;
+        span.dataset.filter = opt.value;
+        span.addEventListener('click', () => {
+          subFilterContainer.querySelectorAll('.subFilterOption').forEach(el => el.classList.remove('active'));
+          span.classList.add('active');
+          updateCardView(match, opt.value, winstreakContainer, statsContainer);
+        });
+        subFilterContainer.appendChild(span);
+      });
+      matchDiv.appendChild(subFilterContainer);
+      matchDiv.appendChild(statsContainer);
+      updateCardView(match, 'overall', winstreakContainer, statsContainer);
+
+      // Toggle Icon
+      const toggleIcon = document.createElement('div');
+      toggleIcon.classList.add('toggleIcon');
+      toggleIcon.title = 'Hide Winstreaks and Stats';
+      toggleIcon.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const matchDivParent = toggleIcon.closest('.match');
+        const ws = matchDivParent.querySelector('.winstreakContainer');
+        const st = matchDivParent.querySelector('.statsContainer');
+        const subF = matchDivParent.querySelector('.matchSubFilter');
+        const infoIcon = matchDivParent.querySelector('.infoIcon');
+        if (ws.style.display !== 'none') {
+          ws.style.display = 'none';
+          st.style.display = 'none';
+          subF.style.display = 'none';
+          toggleIcon.classList.add('expanded');
+          toggleIcon.title = 'Show Winstreaks and Stats';
+          if (infoIcon) infoIcon.style.display = 'none';
+        } else {
+          ws.style.display = 'flex';
+          st.style.display = 'block';
+          subF.style.display = 'flex';
+          toggleIcon.classList.remove('expanded');
+          toggleIcon.title = 'Hide Winstreaks and Stats';
+          if (infoIcon) infoIcon.style.display = 'flex';
+        }
+      });
+      matchDiv.appendChild(toggleIcon);
+
+      // Info Icon
+      const infoIcon = document.createElement('div');
+      infoIcon.classList.add('infoIcon');
+      infoIcon.title = 'Stats on last 7 matches';
+      infoIcon.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+      matchDiv.appendChild(infoIcon);
+
+      return matchDiv;
+    }
+
+    // -------------------------
+    // Render Matches
+    // -------------------------
+    function renderMatches() {
+      if ((!initialMatches || initialMatches.length === 0) && !showFavorites) return;
+      matchesContainer.innerHTML = '';
+      let matchesToRender = showFavorites ? favorites : initialMatches;
+      const filter = filterSelect.value;
+      if (!showFavorites && filter !== 'all') {
+        const keys = filterMap[filter];
+        if (keys) {
+          matchesToRender = matchesToRender.slice().sort((a, b) => {
+            let aValue, bValue;
+            if (filter === 'scoredGoals') {
+              aValue = parseFloat(a.homeData.scoredGoals.replace('+', '')) + parseFloat(a.awayData.scoredGoals.replace('+', ''));
+              bValue = parseFloat(b.homeData.scoredGoals.replace('+', '')) + parseFloat(b.awayData.scoredGoals.replace('+', ''));
+            } else {
+              const aHomeValue = a.homeData[keys.home];
+              const aAwayValue = a.awayData[keys.away];
+              const bHomeValue = b.homeData[keys.home];
+              const bAwayValue = b.awayData[keys.away];
+              aValue = calculateAverage(aHomeValue, aAwayValue);
+              bValue = calculateAverage(bHomeValue, bAwayValue);
+            }
+            return bValue - aValue;
+          });
+        }
+      }
+      if (showFavorites || filter === 'all') {
+        const groups = {};
+        matchesToRender.forEach(match => {
+          const leagueKey = `${match.country} ${match.league}`;
+          if (!groups[leagueKey]) groups[leagueKey] = [];
+          groups[leagueKey].push(match);
+        });
+        const leagueKeys = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+        leagueKeys.forEach(leagueKey => {
+          const groupContainer = document.createElement('div');
+          groupContainer.classList.add('leagueGroup');
+          const groupHeader = document.createElement('div');
+          groupHeader.classList.add('leagueHeader');
+          const toggleIcon = document.createElement('span');
+          toggleIcon.classList.add('leagueToggle');
+          toggleIcon.textContent = '+';
+          groupHeader.appendChild(toggleIcon);
+          const headerText = document.createElement('span');
+          headerText.textContent = leagueKey;
+          groupHeader.appendChild(headerText);
+          groupContainer.appendChild(groupHeader);
+          const groupContent = document.createElement('div');
+          groupContent.classList.add('leagueGroupContent');
+          groupContent.style.display = 'none';
+          groups[leagueKey].forEach(match => {
+            const matchCard = createMatchCard(match);
+            groupContent.appendChild(matchCard);
+          });
+          groupContainer.appendChild(groupContent);
+          matchesContainer.appendChild(groupContainer);
+          groupHeader.addEventListener('click', () => {
+            if (groupContent.style.display === 'none') {
+              groupContent.style.display = 'block';
+              toggleIcon.textContent = '−';
+            } else {
+              groupContent.style.display = 'none';
+              toggleIcon.textContent = '+';
+            }
+          });
+        });
+      } else {
+        matchesToRender.forEach(match => {
+          const matchCard = createMatchCard(match);
+          matchesContainer.appendChild(matchCard);
+        });
+      }
+      document.querySelectorAll('.infoIcon').forEach(icon => icon.style.display = 'flex');
+    }
+
+    function getPercentageClass(value) {
+      if (typeof value === 'string' && value.endsWith('%')) {
+        const num = parseFloat(value.replace('%', ''));
+        if (num >= 90) return 'percent-darkgreen';
+        else if (num >= 80) return 'percent-green';
+        else if (num >= 70) return 'percent-greenyellow';
+        else if (num >= 60) return 'percent-yellow';
+        else if (num >= 50) return 'percent-orange';
+        else return 'percent-red';
+      }
+      return '';
+    }
+
+    function getGoalsClass(value) {
+      if (typeof value === 'string') {
+        const num = parseFloat(value.replace('+', '').trim());
+        if (isNaN(num)) return '';
+        if (num >= 3) return 'goals-darkgreen';
+        else if (num >= 2.5) return 'goals-green';
+        else if (num >= 2) return 'goals-greenyellow';
+        else if (num >= 1.5) return 'goals-yellow';
+        else if (num >= 1) return 'goals-orange';
+        else return 'goals-red';
+      }
+      return '';
+    }
+
+    function getGoalsConcededClass(value) {
+      if (isNaN(value)) return '';
+      if (value >= 0 && value < 1) return 'goals-conceded-green1';
+      else if (value >= 1 && value < 2) return 'goals-conceded-green2';
+      else if (value >= 3 && value <= 5) return 'goals-conceded-yellow';
+      else if (value >= 6 && value <= 8) return 'goals-conceded-orange';
+      else if (value >= 9) return 'goals-conceded-red';
+      return '';
+    }
+
+    function calculateAverage(homeValue, awayValue) {
+      function parseValue(value) {
+        if (!value) return 0;
+        const cleanedValue = value.replace('+', '').replace('%', '').trim();
+        const parsed = parseFloat(cleanedValue);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      const homeVal = parseValue(homeValue);
+      const awayVal = parseValue(awayValue);
+      return (homeVal + awayVal) / 2;
+    }
+
+    function calculateScoredGoals(goalsStr, matchesStr) {
+      const goals = parseFloat(goalsStr.replace('+', '').trim());
+      const matches = parseFloat(matchesStr);
+      if (isNaN(goals) || isNaN(matches) || matches === 0) return '0.00';
+      return `+${(goals / matches).toFixed(2)}`;
+    }
+
+    // -------------------------
+    // Initialize on DOMContentLoaded
+    // -------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      initDayPicker();
+    });
+  </script>
+</body>
+</html>
