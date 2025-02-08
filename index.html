@@ -24,7 +24,7 @@
     body::-webkit-scrollbar {
       display: none;
     }
-    /* Combined Sticky Header (Day Picker + Filters + Favorites) */
+    /* Combined Sticky Header */
     header.stickyHeader {
       position: fixed;
       top: 0;
@@ -36,7 +36,7 @@
       flex-direction: column;
       padding: 0;
     }
-    /* Day Picker Bar */
+    /* Day Picker */
     .dayPicker {
       display: flex;
       justify-content: space-around;
@@ -58,7 +58,7 @@
       -webkit-text-fill-color: transparent;
       font-weight: bold;
     }
-    /* Header Controls (Filters + Favorites) */
+    /* Header Controls */
     .headerControls {
       display: flex;
       justify-content: space-evenly;
@@ -67,8 +67,8 @@
       padding: 4px 8px;
       background-color: #1A1A1A;
     }
-    .picker {
-      flex: 0 0 70%;
+    .scheduleFilter {
+      flex: 0 0 30%;
       height: 3em;
       border-radius: 6px;
       border: none;
@@ -76,10 +76,23 @@
       color: #E0E0E0;
       padding: 0 12px;
       font-size: 14px;
-      max-width: 70%;
+      max-width: 30%;
     }
+    .scheduleFilter:focus { outline: none; }
+    .mainFilter {
+      flex: 0 0 45%;
+      height: 3em;
+      border-radius: 6px;
+      border: none;
+      background-color: #333;
+      color: #E0E0E0;
+      padding: 0 12px;
+      font-size: 14px;
+      max-width: 45%;
+    }
+    .mainFilter:focus { outline: none; }
     .favoritesButton {
-      flex: 0 0 30%;
+      flex: 0 0 25%;
       height: 2.5em;
       border-radius: 4px;
       border: none;
@@ -88,21 +101,18 @@
       font-weight: bold;
       cursor: pointer;
       font-size: 15px;
-      max-width: 30%;
+      max-width: 25%;
     }
     /* Main Container */
     .container {
       width: 100%;
       max-width: 100%;
       margin: 0 auto;
-      padding: 21.5vw 2.08vw 2.08vw 2.08vw;
+      padding: 25vw 2.08vw 2.08vw 2.08vw;
       box-sizing: border-box;
     }
     /* Match Cards */
-    .matchesContainer {
-      margin-top: 10px;
-      max-width: 100%;
-    }
+    .matchesContainer { margin-top: 10px; max-width: 100%; }
     .match {
       background-color: #2C2C2C;
       margin-bottom: 16px;
@@ -119,10 +129,7 @@
       padding: 14px 12px;
       background-color: #333;
     }
-    .matchDate {
-      font-size: 12px;
-      color: #BBB;
-    }
+    .matchDate { font-size: 12px; color: #BBB; }
     .favoriteIcon {
       background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
       -webkit-background-clip: text;
@@ -157,11 +164,7 @@
       height: 46px;
       object-fit: contain;
     }
-    .vs {
-      margin: 0 8px;
-      font-size: 14px;
-      color: #888;
-    }
+    .vs { margin: 0 8px; font-size: 14px; }
     .winstreakContainer {
       display: flex;
       justify-content: space-between;
@@ -196,7 +199,7 @@
     }
     .matchSubFilter {
       display: flex;
-      justify-content: center;
+      justify-content: space-evenly;
       background-color: #333;
       padding: 4px 0;
     }
@@ -237,10 +240,7 @@
       pointer-events: none;
       z-index: 0;
     }
-    .statsContainer > * {
-      position: relative;
-      z-index: 1;
-    }
+    .statsContainer > * { position: relative; z-index: 1; }
     .statRow {
       display: flex;
       justify-content: space-between;
@@ -350,7 +350,7 @@
       z-index: 10;
     }
     .infoIcon:hover::after { opacity: 1; }
-    /* Empty Favorites Message */
+    /* Empty Matches Message */
     .emptyFavorites {
       display: flex;
       flex-direction: column;
@@ -377,7 +377,7 @@
     @media (max-width: 480px) {
       .dayPicker { padding: 1.67vw 0 0.83vw 0; }
       .headerControls { padding: 4px 6px; }
-      .picker { font-size: 13px; padding: 0 8px; }
+      .scheduleFilter, .mainFilter { font-size: 13px; padding: 0 8px; }
       .favoritesButton { font-size: 15px; }
       .teamNames { padding: 3.20vw; }
       .winstreakContainer { padding: 0 3vw 3vw 3vw; }
@@ -395,7 +395,7 @@
       .infoIcon::after { font-size: 13px; }
       .emptyFavorites .star { font-size: 16vw; }
       .emptyFavorites .message { font-size: 6vw; }
-      .container { padding: 21.5vw 2.08vw 2.08vw 2.08vw;  }
+      .container { padding: 21.5vw 2.08vw 2.08vw 2.08vw; }
       .statsContainer::before { width: 53vw; height: 53vw; }
       .borderGradient { height: 0.32vw; }
     }
@@ -428,22 +428,26 @@
   <!-- Combined Sticky Header -->
   <header class="stickyHeader">
     <!-- Day Picker -->
-    <div id="dayPicker" class="dayPicker">
-      <!-- Day items added via JavaScript -->
-    </div>
-    <!-- Header Controls (Filters + Favorites) -->
+    <div id="dayPicker" class="dayPicker"></div>
+    <!-- Header Controls -->
     <div class="headerControls">
-      <select class="picker" id="filter">
+      <select class="scheduleFilter" id="scheduleFilter">
+        <option value="all">All</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="live">LIVE</option>
+        <option value="finished">Finished</option>
+      </select>
+      <select class="mainFilter" id="filter">
         <option value="all">All matches</option>
-        <option value="goalsMatch">Average Total Goals</option> 
-        <option value="scoredGoals">Average Scored Goals</option> 
+        <option value="goalsMatch">Average Total Goals</option>
+        <option value="scoredGoals">Average Scored Goals</option>
         <option value="hover15">Average Over 1.5</option>
         <option value="hover25">Average Over 2.5</option>
         <option value="hrgoals">Goals Conceded</option>
         <option value="1stHalf_hover05">1st Half Over 0.5</option>
         <option value="1stHalf_hover15">1st Half Over 1.5</option>
         <option value="2ndHalf_over05">2nd Half Over 0.5</option>
-        <option value="2ndHalf_over15">2nd Half Over 1.5</option> 
+        <option value="2ndHalf_over15">2nd Half Over 1.5</option>
         <option value="hcleansheet">Average Clean Sheets</option>
         <option value="hbtts">GG</option>
       </select>
@@ -456,17 +460,59 @@
   </div>
 
   <script>
+    // Helper: Returns a two-letter abbreviation for team names.
+    // If the team name starts with "1. FC ", it removes that prefix and then uses the first two letters of the remainder.
+    function getSubFilterLabel(teamName, location) {
+      if (teamName.startsWith("1. FC ")) {
+        const remainder = teamName.substring(5).trim(); // Remove "1. FC "
+        return remainder.substring(0, 2).toUpperCase() + " - " + location;
+      } else {
+        return teamName.substring(0, 2).toUpperCase() + " - " + location;
+      }
+    }
+
+    // -------------------------
+    // Helper: Parse dateNtime string (format: "dd/mm/yy - HH:MM")
+    function parseDateNtime(dateStr) {
+      let parts = dateStr.split(" - ");
+      if (parts.length < 2) return new Date(dateStr);
+      let datePart = parts[0].trim();
+      let timePart = parts[1].trim();
+      let dateComponents = datePart.split("/");
+      if (dateComponents.length < 3) return new Date(dateStr);
+      let day = parseInt(dateComponents[0], 10);
+      let month = parseInt(dateComponents[1], 10);
+      let year = parseInt(dateComponents[2], 10);
+      if (year < 100) { year += 2000; }
+      let timeComponents = timePart.split(":");
+      let hours = parseInt(timeComponents[0], 10);
+      let minutes = parseInt(timeComponents[1], 10);
+      return new Date(year, month - 1, day, hours, minutes);
+    }
+
+    // -------------------------
+    // Helper: Get Match Status for schedule filtering
+    function getMatchStatus(match) {
+      let matchStartTime = parseDateNtime(match.dateNtime);
+      let now = new Date();
+      if (isNaN(matchStartTime.getTime())) return "unknown";
+      if (now < matchStartTime) return "scheduled";
+      else if (now >= matchStartTime && now < new Date(matchStartTime.getTime() + 2 * 60 * 60 * 1000))
+        return "live";
+      else return "finished";
+    }
+
     // -------------------------
     // Global Variables & Mappings
-    // -------------------------
-    let favorites = []; // Persist favorites across days.
+    let favorites = [];
     let showFavorites = false;
     let initialMatches = [];
-    let currentDay = ''; // Track the currently selected day.
-    let leagueExpansionStates = {}; // Track league group expansion states
+    let currentDay = '';
+    let leagueExpansionStates = {};
 
     const matchesContainer = document.getElementById('matchesContainer');
     const filterSelect = document.getElementById('filter');
+    const scheduleFilterSelect = document.getElementById('scheduleFilter');
 
     const filterMap = {
       goalsMatch: { home: 'avgTotalGoals', away: 'avgTotalGoals' },
@@ -479,26 +525,25 @@
       '2ndHalf_over05': { home: '2ndHalf_over05', away: '2ndHalf_over05' },
       '2ndHalf_over15': { home: '2ndHalf_over15', away: '2ndHalf_over15' },
       hcleansheet: { home: 'hcleansheet', away: 'acleansheet' },
-      hbtts: { home: 'hbtts', away: 'abtts' },
+      hbtts: { home: 'hbtts', away: 'abtts' }
     };
 
     const filterToStatTitle = {
-      goalsMatch: 'Total Goals', 
-      scoredGoals: 'Scored Goals', 
+      goalsMatch: 'Total Goals',
+      scoredGoals: 'Scored Goals',
       hover25: 'Over 2.5',
       hover15: 'Over 1.5',
       hrgoals: 'Goals Conceded',
       '1stHalf_hover05': '1st Half Over 0.5',
       '1stHalf_hover15': '1st Half Over 1.5',
-      '2ndHalf_over05': '2nd Half Over 0.5', 
-      '2ndHalf_over15': '2nd Half Over 1.5', 
+      '2ndHalf_over05': '2nd Half Over 0.5',
+      '2ndHalf_over15': '2nd Half Over 1.5',
       hcleansheet: 'Clean Sheets',
       hbtts: 'GG'
     };
 
     // -------------------------
     // Day Picker Setup
-    // -------------------------
     const dayPicker = document.getElementById('dayPicker');
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     const dayGists = {
@@ -506,9 +551,9 @@
       "Tuesday": "https://gist.githubusercontent.com/CostinStefan",
       "Wednesday": "https://gist.githubusercontent.com/CostinStefan",
       "Thursday": "https://gist.githubusercontent.com/CostinStefan",
-      "Friday": "https://gist.githubusercontent.com/CostinStefan/67f98ef01e759671ce13939b57fe6646/raw/aca7bc463b2096776c36cfc17fcb7cb1b75cf66d/friday.json",
-      "Saturday": "https://gist.githubusercontent.com/CostinStefan/6a6d57bd498ba7e3e4b875f7a96de26a/raw/b5fb52366a6457ff2c4e14749d914560cf82a806/saturday.json",
-      "Sunday": "https://gist.githubusercontent.com/CostinStefan/"
+      "Friday": "",
+      "Saturday": "",
+      "Sunday": "https://gist.githubusercontent.com/CostinStefan/50a9c4ce877c17ad51182f6d9483e967/raw/875d45d5d6568eb54c177cfd7b74c766d1917c32/sunday.json"
     };
 
     function initDayPicker() {
@@ -533,7 +578,6 @@
 
     // -------------------------
     // Load Matches for a Day
-    // -------------------------
     function loadMatchesForDay(day) {
       initialMatches = [];
       renderMatches();
@@ -547,7 +591,7 @@
         .then(data => {
           data.forEach(match => {
             if (!match.hasOwnProperty('isExpanded')) {
-              match.isExpanded = true; // Initialize expanded state
+              match.isExpanded = true;
             }
             match.homeData.scoredGoals = calculateScoredGoals(match.homeData.hsgoals, match.homeData.hmatches);
             match.awayData.scoredGoals = calculateScoredGoals(match.awayData.asgoals, match.awayData.amatches);
@@ -559,41 +603,45 @@
     }
 
     // -------------------------
-    // Favorites & Filter Handling
+    // Render Empty Matches Message
+    function renderEmptyMatchesMessage() {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.classList.add('emptyFavorites');
+      const icon = document.createElement('div');
+      icon.classList.add('star');
+      icon.textContent = '☹';
+      const message = document.createElement('div');
+      message.classList.add('message');
+      message.textContent = 'No matches found!';
+      emptyDiv.appendChild(icon);
+      emptyDiv.appendChild(message);
+      matchesContainer.appendChild(emptyDiv);
+    }
+
     // -------------------------
+    // Favorites & Filter Handling
     filterSelect.addEventListener('change', () => {
       renderMatches();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-
+    scheduleFilterSelect.addEventListener('change', () => {
+      renderMatches();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
     function toggleShowFavorites() {
       showFavorites = !showFavorites;
       document.querySelector('.favoritesButton').textContent = showFavorites ? 'All Matches' : 'Favorites';
-
-      // Reset league expansion states when switching to favorites
-      if (showFavorites) {
-        leagueExpansionStates = {}; // Collapse all leagues by default
-      }
-
-      if (!showFavorites) {
-        loadMatchesForDay(currentDay);
-      } else {
-        renderMatches();
-      }
+      if (showFavorites) { leagueExpansionStates = {}; }
+      if (!showFavorites) { loadMatchesForDay(currentDay); } else { renderMatches(); }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
     function toggleFavorite(match, event) {
-      event.stopPropagation(); // Prevent the toggle (hide/show stats) from activating
+      event.stopPropagation();
       const favIndex = favorites.findIndex(fav => fav.id === match.id);
-      if (favIndex > -1) {
-        favorites.splice(favIndex, 1);
-      } else {
-        favorites.push({ ...match, isExpanded: match.isExpanded }); // Preserve expanded state
-      }
+      if (favIndex > -1) { favorites.splice(favIndex, 1); }
+      else { favorites.push({ ...match, isExpanded: match.isExpanded }); }
       renderMatches();
     }
-
     function renderEmptyFavoritesMessage() {
       const emptyDiv = document.createElement('div');
       emptyDiv.classList.add('emptyFavorites');
@@ -610,7 +658,6 @@
 
     // -------------------------
     // Helper Functions (Winstreaks, Stats, etc.)
-    // -------------------------
     function createWinstreakBox(result) {
       const letter = result[0];
       const scoreMatch = result.match(/\(([^)]+)\)/);
@@ -633,16 +680,14 @@
       });
       return box;
     }
-
     function renderWinstreakColumn(dataArray) {
       const wrapper = document.createElement('div');
       wrapper.classList.add('winstreakWrapper');
-      dataArray.forEach(result => {
-        wrapper.appendChild(createWinstreakBox(result));
-      });
+      dataArray.forEach(result => { wrapper.appendChild(createWinstreakBox(result)); });
       return wrapper;
     }
 
+    // Render Overall Stats – include Clean Sheets and GG (all as percentages)
     function renderOverallStats(match, filter, activeStatTitle) {
       const container = document.createElement('div');
       const homeScoredGoals = calculateScoredGoals(match.homeData.hsgoals, match.homeData.hmatches);
@@ -657,8 +702,8 @@
         { title: '1st Half Over 1.5', homeValue: match.homeData['1stHalf_hover15'], awayValue: match.awayData['1stHalf_aover15'] },
         { title: '2nd Half Over 0.5', homeValue: match.homeData['2ndHalf_over05'], awayValue: match.awayData['2ndHalf_over05'] },
         { title: '2nd Half Over 1.5', homeValue: match.homeData['2ndHalf_over15'], awayValue: match.awayData['2ndHalf_over15'] },
-        { title: 'Clean Sheets', homeValue: match.homeData.hcleansheet, awayValue: match.awayData.acleansheet },
-        { title: 'GG', homeValue: match.homeData.hbtts, awayValue: match.awayData.abtts }
+        { title: 'Clean Sheets', homeValue: match.homeData.hcleansheet || "0.00%", awayValue: match.awayData.acleansheet || "0.00%" },
+        { title: 'GG', homeValue: match.homeData.hbtts || "0.00%", awayValue: match.awayData.abtts || "0.00%" }
       ];
       essentialStats.forEach(stat => {
         const row = document.createElement('div');
@@ -716,8 +761,8 @@
         { title: '1st Half Over 1.5', value: stats['1stHalf_hover15'] },
         { title: '2nd Half Over 0.5', value: stats['2ndHalf_over05'] },
         { title: '2nd Half Over 1.5', value: stats['2ndHalf_over15'] },
-        { title: 'Clean Sheets', value: stats.hcleansheet },
-        { title: 'GG', value: stats.hbtts }
+        { title: 'Clean Sheets', value: stats.hcleansheet || "0.00%" },
+        { title: 'GG', value: stats.hbtts || "0.00%" }
       ];
       statData.forEach(stat => {
         const row = document.createElement('div');
@@ -768,8 +813,8 @@
         { title: '1st Half Over 1.5', value: stats['1stHalf_aover15'] },
         { title: '2nd Half Over 0.5', value: stats['2ndHalf_over05'] },
         { title: '2nd Half Over 1.5', value: stats['2ndHalf_over15'] },
-        { title: 'Clean Sheets', value: stats.acleansheet },
-        { title: 'GG', value: stats.abtts }
+        { title: 'Clean Sheets', value: stats.acleansheet || "0.00%" },
+        { title: 'GG', value: stats.abtts || "0.00%" }
       ];
       statData.forEach(stat => {
         const row = document.createElement('div');
@@ -807,6 +852,90 @@
       return container;
     }
 
+    // NEW function: Render Predictions block with updated layout.
+    // - Row 1: Expected Goals (with label "Expected Goals")
+    // - Row 2: A header row with three columns: "Home Win", "Draw", "Away win"
+    // - Row 3: A row with percentages in the order: home, draw, away, all inside a container that is 60% width of the available space
+    // - Row 4: Advice text with the "Double chance : " prefix removed.
+    function renderPredictions(match) {
+      const container = document.createElement('div');
+
+      // Row 1: Expected Goals
+      const row1 = document.createElement('div');
+      row1.classList.add('statRow');
+      const homeEG = document.createElement('span');
+      homeEG.classList.add('statValue');
+      homeEG.textContent = (match.predictions.goals && match.predictions.goals.home) ? match.predictions.goals.home : '';
+      const labelEG = document.createElement('span');
+      labelEG.classList.add('statTitle');
+      labelEG.textContent = 'Expected Goals';
+      const awayEG = document.createElement('span');
+      awayEG.classList.add('statValue');
+      awayEG.textContent = (match.predictions.goals && match.predictions.goals.away) ? match.predictions.goals.away : '';
+      row1.appendChild(homeEG);
+      row1.appendChild(labelEG);
+      row1.appendChild(awayEG);
+      container.appendChild(row1);
+
+      // New Chances Block Container (set to 60% width)
+      const chanceContainer = document.createElement('div');
+      chanceContainer.style.width = "60%";
+      chanceContainer.style.margin = "0 auto";
+
+      // Row 2: Header row with labels for each chance column
+      const row2 = document.createElement('div');
+      row2.classList.add('statRow');
+      const homeHeader = document.createElement('span');
+      homeHeader.classList.add('statTitle');
+      homeHeader.textContent = "Home Win";
+      const drawHeader = document.createElement('span');
+      drawHeader.classList.add('statTitle');
+      drawHeader.textContent = "Draw";
+      const awayHeader = document.createElement('span');
+      awayHeader.classList.add('statTitle');
+      awayHeader.textContent = "Away win";
+      row2.appendChild(homeHeader);
+      row2.appendChild(drawHeader);
+      row2.appendChild(awayHeader);
+      chanceContainer.appendChild(row2);
+
+      // Row 3: Percentages row with values in order: home, draw, away
+      const row3 = document.createElement('div');
+      row3.classList.add('statRow');
+      const homeChance = document.createElement('span');
+      homeChance.classList.add('statValue');
+      homeChance.textContent = (match.predictions.percent && match.predictions.percent.home) ? match.predictions.percent.home : '';
+      const drawChance = document.createElement('span');
+      drawChance.classList.add('statValue');
+      drawChance.textContent = (match.predictions.percent && match.predictions.percent.draw) ? match.predictions.percent.draw : '';
+      const awayChance = document.createElement('span');
+      awayChance.classList.add('statValue');
+      awayChance.textContent = (match.predictions.percent && match.predictions.percent.away) ? match.predictions.percent.away : '';
+      row3.appendChild(homeChance);
+      row3.appendChild(drawChance);
+      row3.appendChild(awayChance);
+      chanceContainer.appendChild(row3);
+
+      container.appendChild(chanceContainer);
+
+      // Row 4: Advice text with "Double chance : " prefix removed
+      const row4 = document.createElement('div');
+      row4.classList.add('statRow');
+      const adviceRow = document.createElement('span');
+      adviceRow.classList.add('statTitle');
+      adviceRow.style.width = "100%";
+      let adviceText = (match.predictions.advice) ? match.predictions.advice : '';
+      const prefix = "Double chance : ";
+      if (adviceText.startsWith(prefix)) {
+        adviceText = adviceText.slice(prefix.length).trim();
+      }
+      adviceRow.textContent = adviceText;
+      row4.appendChild(adviceRow);
+      container.appendChild(row4);
+
+      return container;
+    }
+
     function updateCardView(match, subFilter, winstreakContainer, statsContainer) {
       winstreakContainer.innerHTML = '';
       statsContainer.innerHTML = '';
@@ -835,6 +964,9 @@
         awayStats.style.marginLeft = 'auto';
         statsContainer.appendChild(awayStats);
       }
+      // Append the updated Predictions block at the bottom.
+      const predictionsBlock = renderPredictions(match);
+      statsContainer.appendChild(predictionsBlock);
     }
 
     function createMatchCard(match) {
@@ -869,23 +1001,27 @@
       homeTeam.appendChild(homeLogo);
       homeTeam.appendChild(homeTeamName);
       
-      // Determine status text between teams based on the match start time.
-      // Replace the space with a "T" to help parse ISO-like strings (e.g. "2025-02-08 15:00" becomes "2025-02-08T15:00").
       const vs = document.createElement('div');
       vs.classList.add('vs');
-      let matchStartTime = new Date(match.dateNtime.replace(' ', 'T'));
+      let matchStartTime = parseDateNtime(match.dateNtime);
       let now = new Date();
-      if (isNaN(matchStartTime.getTime())) {
-        // If the date is invalid, fallback to "vs"
-        vs.textContent = 'vs';
-      } else if (matchStartTime > now) {
-        vs.textContent = 'vs';
-      } else {
-        const diffHours = (now - matchStartTime) / (1000 * 60 * 60);
-        if (diffHours <= 2) {
-          vs.innerHTML = '<i>in-play</i>';
+      if (isNaN(matchStartTime.getTime())) { vs.textContent = 'VS'; }
+      else {
+        if (now < matchStartTime) {
+          vs.textContent = 'VS';
+          vs.style.color = '';
+          vs.style.fontStyle = '';
+          vs.style.fontWeight = '';
+        } else if (now >= matchStartTime && now < new Date(matchStartTime.getTime() + 2 * 60 * 60 * 1000)) {
+          vs.textContent = 'LIVE';
+          vs.style.color = '#FF5C5C';
+          vs.style.fontStyle = '';
+          vs.style.fontWeight = '';
         } else {
-          vs.innerHTML = '<b>played</b>';
+          vs.textContent = 'Played';
+          vs.style.color = '#1E66FF';
+          vs.style.fontWeight = '';
+          vs.style.fontStyle = '';
         }
       }
       
@@ -905,7 +1041,7 @@
       teamNames.appendChild(awayTeam);
       matchDiv.appendChild(teamNames);
 
-      // Winstreak Container (initial view: overall)
+      // Winstreak Container
       const winstreakContainer = document.createElement('div');
       winstreakContainer.classList.add('winstreakContainer');
       winstreakContainer.style.display = match.isExpanded ? 'flex' : 'none';
@@ -929,8 +1065,8 @@
       const subFilterContainer = document.createElement('div');
       subFilterContainer.classList.add('matchSubFilter');
       subFilterContainer.style.display = match.isExpanded ? 'flex' : 'none';
-      const homeLabel = match.homeTeam.substring(0, 3).toUpperCase() + " - Home";
-      const awayLabel = match.awayTeam.substring(0, 3).toUpperCase() + " - Away";
+      const homeLabel = getSubFilterLabel(match.homeTeam, "Home");
+      const awayLabel = getSubFilterLabel(match.awayTeam, "Away");
       const options = [
         { label: homeLabel, value: 'home' },
         { label: 'Overall', value: 'overall' },
@@ -974,9 +1110,7 @@
       infoIcon.classList.add('infoIcon');
       infoIcon.title = 'Stats on last 7 matches';
       infoIcon.style.display = match.isExpanded ? 'flex' : 'none';
-      infoIcon.addEventListener('click', (event) => {
-        event.stopPropagation();
-      });
+      infoIcon.addEventListener('click', (event) => { event.stopPropagation(); });
       matchDiv.appendChild(infoIcon);
 
       return matchDiv;
@@ -984,70 +1118,80 @@
 
     // -------------------------
     // Render Matches
-    // -------------------------
     function renderMatches() {
       if ((!initialMatches || initialMatches.length === 0) && !showFavorites) return;
       matchesContainer.innerHTML = '';
       let matchesToRender = showFavorites ? favorites : initialMatches;
       
-      if (matchesToRender.length === 0 && showFavorites) {
-        renderEmptyFavoritesMessage();
+      const scheduleValue = scheduleFilterSelect.value;
+      if (scheduleValue !== "all") {
+        matchesToRender = matchesToRender.filter(match => getMatchStatus(match) === scheduleValue);
+      }
+      
+      if (matchesToRender.length === 0) {
+        renderEmptyMatchesMessage();
         return;
       }
-
+      
       const filter = filterSelect.value;
       
-      // Apply grouping for favorites or "all" filter
       if (showFavorites || filter === 'all') {
         const groups = {};
         matchesToRender.forEach(match => {
           const leagueKey = `${match.country} ${match.league}`;
           if (!groups[leagueKey]) groups[leagueKey] = [];
           groups[leagueKey].push(match);
-          
-          // Initialize expansion state if not exists
-          if (!(leagueKey in leagueExpansionStates)) {
-            leagueExpansionStates[leagueKey] = false; // Collapsed by default
-          }
+          if (!(leagueKey in leagueExpansionStates)) { leagueExpansionStates[leagueKey] = false; }
         });
-
         Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach(leagueKey => {
           const groupContainer = document.createElement('div');
           groupContainer.classList.add('leagueGroup');
-          
           const groupHeader = document.createElement('div');
           groupHeader.classList.add('leagueHeader');
-          
           const toggleIcon = document.createElement('span');
           toggleIcon.classList.add('leagueToggle');
           toggleIcon.textContent = leagueExpansionStates[leagueKey] ? '−' : '+';
-          
           const headerText = document.createElement('span');
           headerText.textContent = leagueKey;
-          
           groupHeader.appendChild(toggleIcon);
           groupHeader.appendChild(headerText);
-          
           const groupContent = document.createElement('div');
           groupContent.classList.add('leagueGroupContent');
           groupContent.style.display = leagueExpansionStates[leagueKey] ? 'block' : 'none';
-          
           groups[leagueKey].forEach(match => {
             const matchCard = createMatchCard(match);
             groupContent.appendChild(matchCard);
           });
-          
           groupHeader.addEventListener('click', () => {
             leagueExpansionStates[leagueKey] = !leagueExpansionStates[leagueKey];
             groupContent.style.display = leagueExpansionStates[leagueKey] ? 'block' : 'none';
             toggleIcon.textContent = leagueExpansionStates[leagueKey] ? '−' : '+';
           });
-          
           groupContainer.appendChild(groupHeader);
           groupContainer.appendChild(groupContent);
           matchesContainer.appendChild(groupContainer);
         });
       } else {
+        const keys = filterMap[filter];
+        if (keys) {
+          matchesToRender = matchesToRender.slice().sort((a, b) => {
+            let aValue, bValue;
+            if (filter === 'scoredGoals') {
+              aValue = parseFloat(a.homeData.scoredGoals.replace('+','')) + parseFloat(a.awayData.scoredGoals.replace('+',''));
+              bValue = parseFloat(b.homeData.scoredGoals.replace('+','')) + parseFloat(b.awayData.scoredGoals.replace('+',''));
+            } else {
+              const aHomeValue = a.homeData[keys.home];
+              const aAwayValue = a.awayData[keys.away];
+              const bHomeValue = b.homeData[keys.home];
+              const bAwayValue = b.awayData[keys.away];
+              aValue = calculateAverage(aHomeValue, aAwayValue);
+              bValue = calculateAverage(bHomeValue, bAwayValue);
+            }
+            return bValue - aValue;
+          });
+        } else {
+          console.error(`No mapping found for filter: ${filter}`);
+        }
         matchesToRender.forEach(match => {
           const matchCard = createMatchCard(match);
           matchesContainer.appendChild(matchCard);
@@ -1111,9 +1255,6 @@
       return `+${(goals / matches).toFixed(2)}`;
     }
 
-    // -------------------------
-    // Initialize on DOMContentLoaded
-    // -------------------------
     document.addEventListener('DOMContentLoaded', () => {
       initDayPicker();
     });
