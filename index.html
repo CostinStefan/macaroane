@@ -209,13 +209,6 @@
       color: #E0E0E0;
       transition: background 0.3s;
     }
-    /* Remove hover effect on active filter options */
-    .subFilterOption.active:hover {
-      background: none;
-      -webkit-background-clip: initial;
-      -webkit-text-fill-color: inherit;
-      transition: none;
-    }
     .subFilterOption.active {
       background: linear-gradient(135deg, #6a502e 0%, #d4af37 25%, #ffe29a 50%, #d4af37 75%, #6a502e 100%);
       -webkit-background-clip: text;
@@ -470,6 +463,7 @@
     let showFavorites = false;
     let initialMatches = [];
     let currentDay = ''; // Track the currently selected day.
+    let leagueExpansionStates = {}; // Track league group expansion states
 
     const matchesContainer = document.getElementById('matchesContainer');
     const filterSelect = document.getElementById('filter');
@@ -512,8 +506,8 @@
       "Tuesday": "https://gist.githubusercontent.com/CostinStefan",
       "Wednesday": "https://gist.githubusercontent.com/CostinStefan",
       "Thursday": "https://gist.githubusercontent.com/CostinStefan",
-      "Friday": "https://gist.githubusercontent.com/CostinStefan/",
-      "Saturday": "https://gist.githubusercontent.com/CostinStefan/6a6d57bd498ba7e3e4b875f7a96de26a/raw/0b05e757e5a0633e11405a13a7bb8b756ca2fd50/saturday.json",
+      "Friday": "https://gist.githubusercontent.com/CostinStefan/67f98ef01e759671ce13939b57fe6646/raw/aca7bc463b2096776c36cfc17fcb7cb1b75cf66d/friday.json",
+      "Saturday": "https://gist.githubusercontent.com/CostinStefan/6a6d57bd498ba7e3e4b875f7a96de26a/raw/b5fb52366a6457ff2c4e14749d914560cf82a806/saturday.json",
       "Sunday": "https://gist.githubusercontent.com/CostinStefan/"
     };
 
@@ -552,6 +546,9 @@
         .then(response => response.json())
         .then(data => {
           data.forEach(match => {
+            if (!match.hasOwnProperty('isExpanded')) {
+              match.isExpanded = true; // Initialize expanded state
+            }
             match.homeData.scoredGoals = calculateScoredGoals(match.homeData.hsgoals, match.homeData.hmatches);
             match.awayData.scoredGoals = calculateScoredGoals(match.awayData.asgoals, match.awayData.amatches);
           });
@@ -572,6 +569,12 @@
     function toggleShowFavorites() {
       showFavorites = !showFavorites;
       document.querySelector('.favoritesButton').textContent = showFavorites ? 'All Matches' : 'Favorites';
+
+      // Reset league expansion states when switching to favorites
+      if (showFavorites) {
+        leagueExpansionStates = {}; // Collapse all leagues by default
+      }
+
       if (!showFavorites) {
         loadMatchesForDay(currentDay);
       } else {
@@ -582,10 +585,11 @@
 
     function toggleFavorite(match, event) {
       event.stopPropagation(); // Prevent the toggle (hide/show stats) from activating
-      if (favorites.some(fav => fav.id === match.id)) {
-        favorites = favorites.filter(fav => fav.id !== match.id);
+      const favIndex = favorites.findIndex(fav => fav.id === match.id);
+      if (favIndex > -1) {
+        favorites.splice(favIndex, 1);
       } else {
-        favorites.push(match);
+        favorites.push({ ...match, isExpanded: match.isExpanded }); // Preserve expanded state
       }
       renderMatches();
     }
@@ -885,6 +889,7 @@
       // Winstreak Container (initial view: overall)
       const winstreakContainer = document.createElement('div');
       winstreakContainer.classList.add('winstreakContainer');
+      winstreakContainer.style.display = match.isExpanded ? 'flex' : 'none';
       const homeWS = renderWinstreakColumn(match.homeWinstreak);
       const awayWS = renderWinstreakColumn(match.awayWinstreak);
       winstreakContainer.appendChild(homeWS);
@@ -899,10 +904,12 @@
       // Stats Container
       const statsContainer = document.createElement('div');
       statsContainer.classList.add('statsContainer');
+      statsContainer.style.display = match.isExpanded ? 'block' : 'none';
 
       // Subfilter (Home, Overall, Away)
       const subFilterContainer = document.createElement('div');
       subFilterContainer.classList.add('matchSubFilter');
+      subFilterContainer.style.display = match.isExpanded ? 'flex' : 'none';
       const homeLabel = match.homeTeam.substring(0, 3).toUpperCase() + " - Home";
       const awayLabel = match.awayTeam.substring(0, 3).toUpperCase() + " - Away";
       const options = [
@@ -930,29 +937,16 @@
       // Toggle Icon
       const toggleIcon = document.createElement('div');
       toggleIcon.classList.add('toggleIcon');
-      toggleIcon.title = 'Hide Winstreaks and Stats';
+      toggleIcon.title = match.isExpanded ? 'Hide Stats' : 'Show Stats';
+      if (!match.isExpanded) toggleIcon.classList.add('expanded');
       toggleIcon.addEventListener('click', (event) => {
         event.stopPropagation();
-        const matchDivParent = toggleIcon.closest('.match');
-        const ws = matchDivParent.querySelector('.winstreakContainer');
-        const st = matchDivParent.querySelector('.statsContainer');
-        const subF = matchDivParent.querySelector('.matchSubFilter');
-        const infoIcon = matchDivParent.querySelector('.infoIcon');
-        if (ws.style.display !== 'none') {
-          ws.style.display = 'none';
-          st.style.display = 'none';
-          subF.style.display = 'none';
-          toggleIcon.classList.add('expanded');
-          toggleIcon.title = 'Show Winstreaks and Stats';
-          if (infoIcon) infoIcon.style.display = 'none';
-        } else {
-          ws.style.display = 'flex';
-          st.style.display = 'block';
-          subF.style.display = 'flex';
-          toggleIcon.classList.remove('expanded');
-          toggleIcon.title = 'Hide Winstreaks and Stats';
-          if (infoIcon) infoIcon.style.display = 'flex';
-        }
+        match.isExpanded = !match.isExpanded;
+        winstreakContainer.style.display = match.isExpanded ? 'flex' : 'none';
+        statsContainer.style.display = match.isExpanded ? 'block' : 'none';
+        subFilterContainer.style.display = match.isExpanded ? 'flex' : 'none';
+        toggleIcon.classList.toggle('expanded', !match.isExpanded);
+        toggleIcon.title = match.isExpanded ? 'Hide Stats' : 'Show Stats';
       });
       matchDiv.appendChild(toggleIcon);
 
@@ -960,6 +954,7 @@
       const infoIcon = document.createElement('div');
       infoIcon.classList.add('infoIcon');
       infoIcon.title = 'Stats on last 7 matches';
+      infoIcon.style.display = match.isExpanded ? 'flex' : 'none';
       infoIcon.addEventListener('click', (event) => {
         event.stopPropagation();
       });
@@ -975,66 +970,64 @@
       if ((!initialMatches || initialMatches.length === 0) && !showFavorites) return;
       matchesContainer.innerHTML = '';
       let matchesToRender = showFavorites ? favorites : initialMatches;
-      const filter = filterSelect.value;
-      if (!showFavorites && filter !== 'all') {
-        const keys = filterMap[filter];
-        if (keys) {
-          matchesToRender = matchesToRender.slice().sort((a, b) => {
-            let aValue, bValue;
-            if (filter === 'scoredGoals') {
-              aValue = parseFloat(a.homeData.scoredGoals.replace('+', '')) + parseFloat(a.awayData.scoredGoals.replace('+', ''));
-              bValue = parseFloat(b.homeData.scoredGoals.replace('+', '')) + parseFloat(b.awayData.scoredGoals.replace('+', ''));
-            } else {
-              const aHomeValue = a.homeData[keys.home];
-              const aAwayValue = a.awayData[keys.away];
-              const bHomeValue = b.homeData[keys.home];
-              const bAwayValue = b.awayData[keys.away];
-              aValue = calculateAverage(aHomeValue, aAwayValue);
-              bValue = calculateAverage(bHomeValue, bAwayValue);
-            }
-            return bValue - aValue;
-          });
-        }
+      
+      if (matchesToRender.length === 0 && showFavorites) {
+        renderEmptyFavoritesMessage();
+        return;
       }
+
+      const filter = filterSelect.value;
+      
+      // Apply sorting if needed (same as before)
+      
       if (showFavorites || filter === 'all') {
         const groups = {};
         matchesToRender.forEach(match => {
           const leagueKey = `${match.country} ${match.league}`;
           if (!groups[leagueKey]) groups[leagueKey] = [];
           groups[leagueKey].push(match);
+          
+          // Initialize expansion state if not exists
+          if (!(leagueKey in leagueExpansionStates)) {
+            leagueExpansionStates[leagueKey] = false; // Collapsed by default
+          }
         });
-        const leagueKeys = Object.keys(groups).sort((a, b) => a.localeCompare(b));
-        leagueKeys.forEach(leagueKey => {
+
+        Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach(leagueKey => {
           const groupContainer = document.createElement('div');
           groupContainer.classList.add('leagueGroup');
+          
           const groupHeader = document.createElement('div');
           groupHeader.classList.add('leagueHeader');
+          
           const toggleIcon = document.createElement('span');
           toggleIcon.classList.add('leagueToggle');
-          toggleIcon.textContent = '+';
-          groupHeader.appendChild(toggleIcon);
+          toggleIcon.textContent = leagueExpansionStates[leagueKey] ? '−' : '+';
+          
           const headerText = document.createElement('span');
           headerText.textContent = leagueKey;
+          
+          groupHeader.appendChild(toggleIcon);
           groupHeader.appendChild(headerText);
-          groupContainer.appendChild(groupHeader);
+          
           const groupContent = document.createElement('div');
           groupContent.classList.add('leagueGroupContent');
-          groupContent.style.display = 'none';
+          groupContent.style.display = leagueExpansionStates[leagueKey] ? 'block' : 'none';
+          
           groups[leagueKey].forEach(match => {
             const matchCard = createMatchCard(match);
             groupContent.appendChild(matchCard);
           });
+          
+          groupHeader.addEventListener('click', () => {
+            leagueExpansionStates[leagueKey] = !leagueExpansionStates[leagueKey];
+            groupContent.style.display = leagueExpansionStates[leagueKey] ? 'block' : 'none';
+            toggleIcon.textContent = leagueExpansionStates[leagueKey] ? '−' : '+';
+          });
+          
+          groupContainer.appendChild(groupHeader);
           groupContainer.appendChild(groupContent);
           matchesContainer.appendChild(groupContainer);
-          groupHeader.addEventListener('click', () => {
-            if (groupContent.style.display === 'none') {
-              groupContent.style.display = 'block';
-              toggleIcon.textContent = '−';
-            } else {
-              groupContent.style.display = 'none';
-              toggleIcon.textContent = '+';
-            }
-          });
         });
       } else {
         matchesToRender.forEach(match => {
@@ -1042,7 +1035,6 @@
           matchesContainer.appendChild(matchCard);
         });
       }
-      document.querySelectorAll('.infoIcon').forEach(icon => icon.style.display = 'flex');
     }
 
     function getPercentageClass(value) {
