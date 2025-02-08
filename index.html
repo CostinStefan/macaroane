@@ -868,9 +868,27 @@
       homeTeamName.textContent = match.homeTeam;
       homeTeam.appendChild(homeLogo);
       homeTeam.appendChild(homeTeamName);
+      
+      // Determine status text between teams based on the match start time.
+      // Replace the space with a "T" to help parse ISO-like strings (e.g. "2025-02-08 15:00" becomes "2025-02-08T15:00").
       const vs = document.createElement('div');
       vs.classList.add('vs');
-      vs.textContent = 'vs';
+      let matchStartTime = new Date(match.dateNtime.replace(' ', 'T'));
+      let now = new Date();
+      if (isNaN(matchStartTime.getTime())) {
+        // If the date is invalid, fallback to "vs"
+        vs.textContent = 'vs';
+      } else if (matchStartTime > now) {
+        vs.textContent = 'vs';
+      } else {
+        const diffHours = (now - matchStartTime) / (1000 * 60 * 60);
+        if (diffHours <= 2) {
+          vs.innerHTML = '<i>in-play</i>';
+        } else {
+          vs.innerHTML = '<b>played</b>';
+        }
+      }
+      
       const awayTeam = document.createElement('div');
       awayTeam.classList.add('teamName');
       const awayLogo = document.createElement('img');
@@ -881,6 +899,7 @@
       awayTeamName.textContent = match.awayTeam;
       awayTeam.appendChild(awayLogo);
       awayTeam.appendChild(awayTeamName);
+      
       teamNames.appendChild(homeTeam);
       teamNames.appendChild(vs);
       teamNames.appendChild(awayTeam);
@@ -978,8 +997,7 @@
 
       const filter = filterSelect.value;
       
-      // Apply sorting if needed (same as before)
-      
+      // Apply grouping for favorites or "all" filter
       if (showFavorites || filter === 'all') {
         const groups = {};
         matchesToRender.forEach(match => {
