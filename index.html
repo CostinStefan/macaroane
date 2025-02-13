@@ -92,7 +92,7 @@
     }
     .mainFilter:focus { outline: none; }
     .favoritesButton {
-      flex: 0 0 25%;
+      flex: 0 0 20%;
       height: 2.5em;
       border-radius: 4px;
       border: none;
@@ -208,7 +208,7 @@
       padding: 4px 8px;
       cursor: pointer;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 3.3vw;
       color: #E0E0E0;
       transition: background 0.3s;
     }
@@ -225,21 +225,48 @@
       overflow-x: hidden;
       position: relative;
     }
+    /* Improved Larger Watermark */
     .statsContainer::before {
       content: '';
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 300px;
-      height: 300px;
+      width: 400px;  /* Increased size */
+      height: 400px; /* Increased size */
       background-image: url('https://i.ibb.co/JWQRNMVd/Logo-GT-24-1000.png');
       background-repeat: no-repeat;
       background-size: contain;
-      opacity: 0.08;
+      opacity: 0.12; /* Slightly visible but non-intrusive */
+      /* filter: drop-shadow(0px 0px 12px rgba(255, 215, 0, 0.5)); */
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 0;
     }
+
+    @media (max-width: 1024px) {
+      .statsContainer::before {
+        width: 350px;
+        height: 350px;
+        opacity: 0.12;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .statsContainer::before {
+        width: 300px;
+        height: 300px;
+        opacity: 0.12;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .statsContainer::before {
+        width: 250px;
+        height: 250px;
+        opacity: 0.12;
+      }
+    }
+
     .statsContainer > * { position: relative; z-index: 1; }
     .statRow {
       display: flex;
@@ -413,6 +440,7 @@
       font-weight: bold;
       display: flex;
       align-items: center;
+      border-radius: 6px;
     }
     .leagueToggle {
       margin-right: 8px;
@@ -549,10 +577,10 @@
     const dayGists = {
       "Monday": "https://gist.githubusercontent.com/CostinStefan",
       "Tuesday": "https://gist.githubusercontent.com/CostinStefan",
-      "Wednesday": "https://gist.githubusercontent.com/CostinStefan/5759c0636f18071c9ee6568f19571abf/raw/1532063d24e50cf7cf6543aa2c70fa8435cbcfb4/macaroane.json",
-      "Thursday": "https://gist.githubusercontent.com/CostinStefan/5759c0636f18071c9ee6568f19571abf/raw/c55a3fad0a7f8bf51f00f14842a02bf27fb85c82/macaroane.json",
-      "Friday": "",
-      "Saturday": "",
+      "Wednesday": "https://gist.githubusercontent.com/CostinStefan",
+      "Thursday": "https://gist.githubusercontent.com/CostinStefan",
+      "Friday": "https://gist.githubusercontent.com/CostinStefan/5759c0636f18071c9ee6568f19571abf/raw/4f976b648e4fee2c73123b88960c61d2a6fb9999/macaroane.json",
+      "Saturday": "https://gist.githubusercontent.com/CostinStefan/6a6d57bd498ba7e3e4b875f7a96de26a/raw/38b58770cdef676a45dc2fbe57f8e1b4acdf0e8e/saturday.json",
       "Sunday": ""
     };
 
@@ -853,25 +881,25 @@
     }
 
     // NEW function: Render Predictions block with updated layout.
-    // - Row 1: Expected Goals (with label "Expected Goals")
+    // - Row 1: Expected Goals (with label "Expected Goals") with transformation applied.
     // - Row 2: A header row with three columns: "Home Win", "Draw", "Away win"
-    // - Row 3: A row with percentages in the order: home, draw, away, all inside a container that is 60% width of the available space
-    // - Row 4: Advice text with the "Double chance : " prefix removed.
+    // - Row 3: A row with percentages (chances) in order: home, draw, away inside a container (60% width).
+    // (Note: The previous advice row has been removed.)
     function renderPredictions(match) {
       const container = document.createElement('div');
 
-      // Row 1: Expected Goals
+      // Row 1: Expected Goals with transformation if necessary
       const row1 = document.createElement('div');
       row1.classList.add('statRow');
       const homeEG = document.createElement('span');
       homeEG.classList.add('statValue');
-      homeEG.textContent = (match.predictions.goals && match.predictions.goals.home) ? match.predictions.goals.home : '';
+      homeEG.textContent = (match.predictions.goals && match.predictions.goals.home) ? transformExpectedGoals(match.predictions.goals.home) : '';
       const labelEG = document.createElement('span');
       labelEG.classList.add('statTitle');
       labelEG.textContent = 'Expected Goals';
       const awayEG = document.createElement('span');
       awayEG.classList.add('statValue');
-      awayEG.textContent = (match.predictions.goals && match.predictions.goals.away) ? match.predictions.goals.away : '';
+      awayEG.textContent = (match.predictions.goals && match.predictions.goals.away) ? transformExpectedGoals(match.predictions.goals.away) : '';
       row1.appendChild(homeEG);
       row1.appendChild(labelEG);
       row1.appendChild(awayEG);
@@ -879,7 +907,7 @@
 
       // New Chances Block Container (set to 60% width)
       const chanceContainer = document.createElement('div');
-      chanceContainer.style.width = "60%";
+      chanceContainer.style.width = "70%";
       chanceContainer.style.margin = "0 auto";
 
       // Row 2: Header row with labels for each chance column
@@ -918,24 +946,24 @@
 
       container.appendChild(chanceContainer);
 
-      // Row 4: Advice text with "Double chance : " prefix removed
-      const row4 = document.createElement('div');
-      row4.classList.add('statRow');
-      const adviceRow = document.createElement('span');
-      adviceRow.classList.add('statTitle');
-      adviceRow.style.width = "100%";
-      let adviceText = (match.predictions.advice) ? match.predictions.advice : '';
-      const prefix = "Double chance : ";
-      if (adviceText.startsWith(prefix)) {
-        adviceText = adviceText.slice(prefix.length).trim();
-      }
-      adviceRow.textContent = adviceText;
-      row4.appendChild(adviceRow);
-      container.appendChild(row4);
-
       return container;
     }
 
+    // NEW helper: Transform Expected Goals values as requested.
+    function transformExpectedGoals(value) {
+      let num = parseFloat(value);
+      if (!isNaN(num)) {
+        if (num === -1.5) return "+0.5";
+        if (num === -2.5) return "+1.5";
+        if (num === -3.5) return "+2.5";
+        if (num === -4.5) return "+3.5";
+      }
+      return value;
+    }
+
+    // -------------------------
+    // Update Card View – this function updates the stats and wins streaks for each match.
+    // Predictions (Expected Goals and chances) are appended only when subFilter === "overall".
     function updateCardView(match, subFilter, winstreakContainer, statsContainer) {
       winstreakContainer.innerHTML = '';
       statsContainer.innerHTML = '';
@@ -948,6 +976,9 @@
         winstreakContainer.appendChild(homeWS);
         winstreakContainer.appendChild(awayWS);
         statsContainer.appendChild(overallStats);
+        // Append predictions block only for the overall filter.
+        const predictionsBlock = renderPredictions(match);
+        statsContainer.appendChild(predictionsBlock);
       } else if (subFilter === 'home') {
         const dataArray = match.homeAtHomeWinstreak || match.homeWinstreak;
         const statsObj = match.hhomeData || match.homeData;
@@ -964,9 +995,6 @@
         awayStats.style.marginLeft = 'auto';
         statsContainer.appendChild(awayStats);
       }
-      // Append the updated Predictions block at the bottom.
-      const predictionsBlock = renderPredictions(match);
-      statsContainer.appendChild(predictionsBlock);
     }
 
     function createMatchCard(match) {
@@ -1254,7 +1282,7 @@
       if (isNaN(goals) || isNaN(matches) || matches === 0) return '0.00';
       return `+${(goals / matches).toFixed(2)}`;
     }
-
+    
     document.addEventListener('DOMContentLoaded', () => {
       initDayPicker();
     });
